@@ -124,43 +124,86 @@
 
 
 // ====================================================================
-// OPTIONAL: Flight Routes Summary Table
+// OPTIONAL: Flight Route Summary — Enriched Destination Map Layer
 // ====================================================================
-// If you want richer flight statistics on the map (flight counts,
-// delay rates per destination), you can create a summary table in the
-// Eventhouse from the Lakehouse data. Add this to Notebook 02 or run
-// as a one-time KQL ingestion from the Lakehouse flights table.
 //
-// The following function assumes a 'flight_route_summary' table exists
-// with pre-aggregated route stats. See the setup guide for how to
-// create it.
+// The fn_destination_map function above shows airports without flight
+// statistics (the flights table lives in the Lakehouse, not the
+// Eventhouse). To get richer map markers with flight counts, delay
+// rates, and passenger averages per destination, create a
+// flight_route_summary table in the Eventhouse by adding the code
+// below as a new cell in Notebook 02.
+//
+// Once the table and function exist, add fn_flight_routes_detailed
+// as a fourth Fabric Maps layer (see setup-guide/04-configure-map.md
+// section 4.6).
 // ====================================================================
 
-// To create the summary table, run this in a Fabric Notebook (PySpark):
-//
-//   df_routes = spark.sql("""
-//       SELECT
-//           CASE WHEN f.flight_type = 'departure'
-//                THEN f.destination_airport_code
-//                ELSE f.origin_airport_code END AS remote_airport_code,
-//           f.flight_type,
-//           COUNT(*) AS total_flights,
-//           AVG(CASE WHEN f.status = 'delayed' THEN f.delay_minutes END) AS avg_delay_minutes,
-//           SUM(CASE WHEN f.status = 'delayed' THEN 1 ELSE 0 END) AS delayed_count,
-//           SUM(CASE WHEN f.status = 'cancelled' THEN 1 ELSE 0 END) AS cancelled_count,
-//           AVG(f.passenger_count) AS avg_passengers
-//       FROM flights f
-//       GROUP BY 1, 2
-//   """)
-//   # Then write to Eventhouse using write_to_eventhouse() pattern
-//
-// Once the table exists, use this function:
 
-// .create-or-alter function with (folder="FabricMaps", docstring="Flight routes from/to Prague with aggregated stats — requires flight_route_summary table") fn_flight_routes_detailed() {
+// ── Step 1: Add this PySpark code as a new cell in Notebook 02 ──────
+//
+// # ============================================================================
+// # CELL 11 (OPTIONAL) — Write Flight Route Summary to Eventhouse
+// # ============================================================================
+// # Aggregates Lakehouse flights by remote airport and flight type,
+// # then writes the summary to the Eventhouse so KQL map functions
+// # can display flight statistics per destination.
+//
+// print("\nWriting flight route summary to Eventhouse...")
+//
+// df_route_summary = spark.sql("""
+//     SELECT
+//         CASE
+//             WHEN f.flight_type = 'departure' THEN f.destination_airport_code
+//             ELSE f.origin_airport_code
+//         END AS remote_airport_code,
+//         f.flight_type,
+//         COUNT(*) AS total_flights,
+//         ROUND(AVG(CASE WHEN f.status = 'delayed' THEN f.delay_minutes END), 1)
+//             AS avg_delay_minutes,
+//         SUM(CASE WHEN f.status = 'delayed' THEN 1 ELSE 0 END)
+//             AS delayed_count,
+//         SUM(CASE WHEN f.status = 'cancelled' THEN 1 ELSE 0 END)
+//             AS cancelled_count,
+//         ROUND(AVG(f.passenger_count), 0) AS avg_passengers
+//     FROM flights f
+//     WHERE f.origin_airport_code = 'PRG' OR f.destination_airport_code = 'PRG'
+//     GROUP BY 1, 2
+// """)
+//
+// route_schema = StructType([
+//     StructField("remote_airport_code", StringType(), False),
+//     StructField("flight_type", StringType(), False),
+//     StructField("total_flights", LongType(), False),
+//     StructField("avg_delay_minutes", DoubleType(), True),
+//     StructField("delayed_count", LongType(), False),
+//     StructField("cancelled_count", LongType(), False),
+//     StructField("avg_passengers", DoubleType(), False),
+// ])
+//
+// df_route_summary.write \
+//     .format("com.microsoft.kusto.spark.synapse.datasource") \
+//     .option("kustoCluster", KUSTO_URI) \
+//     .option("kustoDatabase", KUSTO_DATABASE) \
+//     .option("kustoTable", "flight_route_summary") \
+//     .option("accessToken", accessToken) \
+//     .option("tableCreateOptions", "CreateIfNotExist") \
+//     .mode("Append") \
+//     .save()
+//
+// route_count = df_route_summary.count()
+// print(f"  ✅ flight_route_summary: {route_count:,} rows written to Eventhouse")
+//
+// ── End of PySpark cell ─────────────────────────────────────────────
+
+
+// ── Step 2: Run this KQL function in the PRGOperations query editor ─
+
+// .create-or-alter function with (folder="FabricMaps", docstring="Flight routes from/to Prague with flight stats per destination — requires flight_route_summary table") fn_flight_routes_detailed() {
 //     flight_route_summary
 //     | join kind=inner (airports) on $left.remote_airport_code == $right.airport_code
 //     | extend
-//         prg_latitude = real(50.1008),
+//         prg_latitude  = real(50.1008),
 //         prg_longitude = real(14.2600)
 //     | project
 //         remote_airport_code,
@@ -170,13 +213,24 @@
 //         region,
 //         flight_type,
 //         total_flights,
-//         avg_delay_minutes = round(avg_delay_minutes, 1),
+//         avg_delay_minutes,
 //         delayed_count,
 //         cancelled_count,
-//         avg_passengers = round(avg_passengers, 0),
-//         latitude,          // destination airport
-//         longitude,         // destination airport
-//         prg_latitude,      // Prague origin
-//         prg_longitude      // Prague origin
+//         avg_passengers,
+//         delay_rate_pct = round(toreal(delayed_count) / toreal(total_flights) * 100, 1),
+//         latitude,           // remote airport
+//         longitude,          // remote airport
+//         prg_latitude,       // Prague (for line layers)
+//         prg_longitude       // Prague (for line layers)
 //     | order by total_flights desc
 // }
+
+// ── Step 3: Add as a Fabric Maps layer ──────────────────────────────
+//
+// 1. In the map editor, click + Add layer → Eventhouse → PRGOperations
+// 2. Under Functions, select fn_flight_routes_detailed
+// 3. Set Latitude = latitude, Longitude = longitude
+// 4. Layer name: "Flight Routes (Detailed)"
+// 5. Style → Size: data-driven by total_flights
+// 6. Style → Color: data-driven by delay_rate_pct (green→red gradient)
+// 7. Labels: airport_code or city
