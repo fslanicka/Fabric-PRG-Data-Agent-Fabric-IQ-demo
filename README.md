@@ -2,7 +2,7 @@
 
 ## Overview
 
-A complete demo package for **Microsoft Fabric Data Agent** with **Fabric IQ** (Ontology) and **Fabric Maps** featuring realistic flight and operational data from Prague Václav Havel Airport (PRG) covering 2024–2025. Demonstrates a **triple-source Data Agent** with Lakehouse (SQL), Eventhouse (KQL), and Ontology (Graph/GQL) — showcasing multi-source intelligence, graph-based reasoning, cross-domain analytics, and geospatial visualization.
+A complete demo package for **Microsoft Fabric Data Agent** with **Fabric IQ** (Ontology) and **Fabric Maps** featuring realistic flight and operational data from Prague Václav Havel Airport (PRG) covering 2024–2025. New deployments use a **V2 ontology** for governed semantics and a **triple-source Data Agent** with Lakehouse (SQL), Eventhouse (KQL), and an independent native Graph (GQL). The legacy ontology setup remains available separately.
 
 Includes ~105,000 flights, 40 airlines, 100 airports, daily weather, ~5,000 gate assignments, ~3,000 crew roster entries, and ~2,000 maintenance events.
 
@@ -15,6 +15,7 @@ Includes ~105,000 flights, 40 airlines, 100 airports, daily weather, ~5,000 gate
 | `agent-config/` | Agent instructions, 3× data source configs (Lakehouse, Eventhouse, Ontology), example queries, KQL map functions |
 | `setup-guide/` | Step-by-step setup (Lakehouse → Eventhouse → Ontology → Agent → Map → Sharing) |
 | `demo-script/` | 40+ demo questions: Lakehouse (CZ+EN), Fabric IQ (EN), Fabric Maps scenarios |
+| `v2/` | Portable native TMDL template, seven-entity logical model, independent graph renderer and regression tests |
 
 ## Quick Start
 
@@ -35,8 +36,8 @@ Includes ~105,000 flights, 40 airlines, 100 airports, daily weather, ~5,000 gate
 2. **Generate flight data** — Import and run `notebooks/01_generate_flight_data.py`
 3. **Create an Eventhouse** — Follow `setup-guide/01b-create-eventhouse.md`
 4. **Generate operational data** — Import and run `notebooks/02_generate_operational_data.py`
-5. **Configure Fabric IQ Ontology** — Follow `setup-guide/02b-configure-ontology.md`
-6. **Configure the Data Agent** — Follow `setup-guide/02-configure-agent.md` (3 data sources)
+5. **Configure Fabric IQ Ontology V2 and native graph** — Follow [the V2-first guide](setup-guide/02c-configure-ontology-v2.md). Existing legacy deployments can retain `setup-guide/02b-configure-ontology.md`.
+6. **Configure the Data Agent** — Follow the V2 guide's agent section for SQL/KQL/native graph plus V2 context; use `setup-guide/02-configure-agent.md` for the legacy path.
 7. **Configure Fabric Maps** — Follow `setup-guide/04-configure-map.md`
 8. **Run the demo** — Start with `demo-script/demo-questions.md`, then `demo-script/demo-questions-fabric-iq.md`
 

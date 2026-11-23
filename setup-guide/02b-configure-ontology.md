@@ -1,4 +1,6 @@
-# Step 2b: Configure Fabric IQ Ontology
+# Step 2b: Configure Fabric IQ Ontology (legacy experience)
+
+> For a new deployment, use [the V2-first guide](02c-configure-ontology-v2.md). This page preserves the original editor workflow; its JSON definitions cannot create or upgrade a new-experience V2 item. A native **Create copy** migration creates a separate item, not an in-place upgrade.
 
 ## Prerequisites
 
@@ -209,8 +211,8 @@ Add the following relationships. For each:
 | 4 | observedOn | WeatherObservation | Flight | `rel_weather_flight` | weather_id | flight_id |
 | 5 | assignedTo | Flight | GateAssignment | `lkh_gate_assignments` | flight_id | gate_assignment_id |
 | 6 | crewedBy | Flight | CrewMember | `lkh_crew_rosters` | flight_id | roster_id |
-| 7 | affectedFlight | MaintenanceEvent | Flight | `lkh_maintenance_events` | related_flight_id | maintenance_id |
-| 8 | basedAt | CrewMember | Airport | `lkh_crew_rosters` | base_airport | roster_id |
+| 7 | affectedFlight | MaintenanceEvent | Flight | `lkh_maintenance_events` | maintenance_id | related_flight_id |
+| 8 | basedAt | CrewMember | Airport | `lkh_crew_rosters` | roster_id | base_airport |
 
 ### Example: Creating the "operates" relationship
 

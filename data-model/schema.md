@@ -4,6 +4,8 @@
 
 This data model represents flight operations at Prague Václav Havel Airport (PRG) for 2024–2025. It consists of 4 tables optimized for analytical queries via Microsoft Fabric Data Agent.
 
+Notebook 02 also creates `lkh_gate_assignments`, `lkh_crew_rosters`, `lkh_maintenance_events` and `rel_weather_flight` in the Lakehouse. The operational copies provide V2 static identities and native graph properties. The bridge joins `weather_id` to `flight_id`; other relationship mappings reuse existing tables. See [the ontology specification](ontology-model.md) and [V2 setup](../setup-guide/02c-configure-ontology-v2.md).
+
 ## Entity Relationship Diagram
 
 ```

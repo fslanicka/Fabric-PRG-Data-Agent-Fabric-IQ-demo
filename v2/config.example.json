@@ -1,0 +1,11 @@
+{
+  "workspaceId": "REPLACE_WITH_WORKSPACE_GUID",
+  "workspaceName": "Prague_Airport",
+  "lakehouseId": "REPLACE_WITH_LAKEHOUSE_ITEM_GUID",
+  "lakehouseName": "PRGFlightData",
+  "eventhouseId": "REPLACE_WITH_PARENT_EVENTHOUSE_ITEM_GUID",
+  "eventhouseName": "PRGOperations",
+  "kqlDatabaseName": "PRGOperations",
+  "kustoUri": "https://REPLACE_WITH_DISCOVERED_HOST.kusto.fabric.microsoft.com",
+  "ontologyName": "PRGAirportOntology"
+}
