@@ -1,0 +1,88 @@
+{
+  "kind": "portable-logical-domain-model",
+  "description": "Synthetic Prague Airport demo. This is not a Fabric Ontology item-definition payload.",
+  "schema": "dbo",
+  "entities": [
+    {
+      "name": "Airline", "table": "airlines", "key": "airline_code",
+      "properties": {
+        "airline_code": "String", "airline_name": "String",
+        "alliance": "String", "country": "String"
+      }
+    },
+    {
+      "name": "Airport", "table": "airports", "key": "airport_code",
+      "properties": {
+        "airport_code": "String", "airport_name": "String", "city": "String",
+        "country": "String", "latitude": "Double", "longitude": "Double", "region": "String"
+      }
+    },
+    {
+      "name": "CrewMember", "table": "lkh_crew_rosters", "key": "roster_id",
+      "description": "One roster entry, not one distinct person.",
+      "properties": {
+        "base_airport": "String", "crew_member_id": "String", "crew_name": "String",
+        "flight_id": "Int64", "license_number": "String", "nationality": "String",
+        "role": "String", "roster_datetime": "DateTime", "roster_id": "Int64"
+      },
+      "timeSeries": {
+        "table": "crew_rosters", "keyColumn": "roster_id", "orderingColumn": "roster_datetime",
+        "properties": ["roster_datetime"]
+      }
+    },
+    {
+      "name": "Flight", "table": "flights", "key": "flight_id",
+      "properties": {
+        "actual_datetime": "DateTime", "aircraft_type": "String", "airline_code": "String",
+        "delay_minutes": "Int64", "delay_reason": "String", "destination_airport_code": "String",
+        "flight_id": "Int64", "flight_number": "String", "flight_type": "String",
+        "gate": "String", "origin_airport_code": "String", "passenger_count": "Int64",
+        "scheduled_datetime": "DateTime", "status": "String", "terminal": "String"
+      }
+    },
+    {
+      "name": "GateAssignment", "table": "lkh_gate_assignments", "key": "gate_assignment_id",
+      "properties": {
+        "actual_end": "DateTime", "actual_start": "DateTime", "flight_id": "Int64",
+        "gate": "String", "gate_assignment_id": "Int64", "scheduled_end": "DateTime",
+        "scheduled_start": "DateTime", "status": "String", "terminal": "String",
+        "turnaround_minutes": "Int64"
+      },
+      "timeSeries": {
+        "table": "gate_assignments", "keyColumn": "gate_assignment_id", "orderingColumn": "scheduled_start",
+        "properties": ["actual_end", "actual_start", "scheduled_end", "scheduled_start"]
+      }
+    },
+    {
+      "name": "MaintenanceEvent", "table": "lkh_maintenance_events", "key": "maintenance_id",
+      "properties": {
+        "aircraft_registration": "String", "aircraft_type": "String", "category": "String",
+        "description": "String", "duration_hours": "Double", "end_datetime": "DateTime",
+        "event_type": "String", "maintenance_id": "Int64", "related_flight_id": "Int64",
+        "resolved": "Boolean", "start_datetime": "DateTime"
+      },
+      "timeSeries": {
+        "table": "maintenance_events", "keyColumn": "maintenance_id", "orderingColumn": "start_datetime",
+        "properties": ["end_datetime", "start_datetime"]
+      }
+    },
+    {
+      "name": "WeatherObservation", "table": "weather", "key": "weather_id",
+      "properties": {
+        "condition": "String", "date": "DateTime", "precipitation_mm": "Double",
+        "temperature_celsius": "Double", "visibility_km": "Double",
+        "weather_id": "String", "wind_speed_kmh": "Double"
+      }
+    }
+  ],
+  "relationships": [
+    {"name": "operates", "source": "Airline", "destination": "Flight", "table": "flights", "sourceColumn": "airline_code", "destinationColumn": "flight_id"},
+    {"name": "originOf", "source": "Airport", "destination": "Flight", "table": "flights", "sourceColumn": "origin_airport_code", "destinationColumn": "flight_id"},
+    {"name": "destinationOf", "source": "Airport", "destination": "Flight", "table": "flights", "sourceColumn": "destination_airport_code", "destinationColumn": "flight_id"},
+    {"name": "observedOn", "source": "WeatherObservation", "destination": "Flight", "table": "rel_weather_flight", "sourceColumn": "weather_id", "destinationColumn": "flight_id"},
+    {"name": "assignedTo", "source": "Flight", "destination": "GateAssignment", "table": "lkh_gate_assignments", "sourceColumn": "flight_id", "destinationColumn": "gate_assignment_id"},
+    {"name": "crewedBy", "source": "Flight", "destination": "CrewMember", "table": "lkh_crew_rosters", "sourceColumn": "flight_id", "destinationColumn": "roster_id"},
+    {"name": "affectedFlight", "source": "MaintenanceEvent", "destination": "Flight", "table": "lkh_maintenance_events", "sourceColumn": "maintenance_id", "destinationColumn": "related_flight_id"},
+    {"name": "basedAt", "source": "CrewMember", "destination": "Airport", "table": "lkh_crew_rosters", "sourceColumn": "roster_id", "destinationColumn": "base_airport"}
+  ]
+}
